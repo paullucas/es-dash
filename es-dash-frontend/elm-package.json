@@ -1,6 +1,8 @@
 {
     "version": "1.0.0",
     "license": "MIT",
+    "summary": "Event Sourcing in Haskell + Elm",
+    "repository": "https://github.com/paullucas/es-dash.git",
     "source-directories": [
         "."
     ],
