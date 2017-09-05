@@ -1,0 +1,5 @@
+*~
+*.swp
+es-dash-frontend/index.html
+es-dash-frontend/elm-stuff/
+**/.stack-work
