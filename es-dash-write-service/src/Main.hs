@@ -28,12 +28,12 @@ instance FromJSON User
 createUser :: Connection -> T.Text -> IO (Async WriteResult)
 createUser conn username = do
   uuid <- nextRandom
-  let user = withJson $ User { userID = (toString uuid), name = (T.unpack username) }
+  let user = withJson $ User { userID = (toString uuid)
+                             , name = (T.unpack username)
+                             }
       stream = StreamName $ T.append (T.pack "user-") (toText uuid)
       event  = createEvent "userCreated" Nothing user
-      --     event  = createEvent "userCreated" Nothing user
   sendEvent conn stream anyVersion event
-  -- sendEvent conn "Users" anyVersion event  
 
 
 parseMember :: ResolvedEvent -> Maybe User
@@ -47,7 +47,7 @@ settings = defaultSettings
 
 loop gesConn wsConn = do
   msg :: T.Text <- WS.receiveData wsConn
-  print $ "event! " ++ (T.unpack msg)
+  print $ "Creating user: " ++ (T.unpack msg)
   createUser gesConn msg
   loop gesConn wsConn
 

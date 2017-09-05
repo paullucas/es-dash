@@ -15,7 +15,7 @@ settings = defaultSettings
 
 loop gesSub wsConn = do
   event <- nextEvent gesSub
-  let msg = T.append (T.pack "event: ") $ resolvedEventOriginalStreamId event
+  let msg = T.append (T.pack "Event Appeared! StreamID: ") $ resolvedEventOriginalStreamId event
   print msg
   WS.sendTextData wsConn msg
   loop gesSub wsConn
