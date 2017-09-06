@@ -34,11 +34,20 @@ parseMember = resolvedEventDataAsJson
 
 -- Read
 
+logEvt id =
+  print $ T.append (T.pack "Event Appeared! StreamID: ") id
+
+isNonStatEvt id =
+  not $ T.isPrefixOf "$" id
+
+sendEvt conn id = do
+  WS.sendTextData conn id
+  logEvt id
+
 readLoop gesSub wsConn = do
   event <- nextEvent gesSub
-  let msg = T.append (T.pack "Event Appeared! StreamID: ") $ resolvedEventOriginalStreamId event
-  print msg
-  WS.sendTextData wsConn msg
+  let streamID :: T.Text = resolvedEventOriginalStreamId event
+  when (isNonStatEvt streamID) $ sendEvt wsConn streamID
   readLoop gesSub wsConn
 
 readServerApp gesConn gesSub pendingConn =
