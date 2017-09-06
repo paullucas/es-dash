@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-
 module EventStoreSettings where
 
 import Database.EventStore

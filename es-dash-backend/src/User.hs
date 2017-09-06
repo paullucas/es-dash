@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric     #-}
 
-module User (User(..)) where
+module User where
 
 import GHC.Generics
 import Data.Aeson (ToJSON, FromJSON)

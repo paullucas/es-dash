@@ -5,7 +5,6 @@ module WriteService where
 
 import           User
 import           EventStoreSettings
-
 import           Control.Concurrent.Async (Async)
 import           Database.EventStore
 import qualified Data.Text as T
@@ -21,12 +20,14 @@ createUser conn username = do
       event  = createEvent "userCreated" Nothing user
   sendEvent conn stream anyVersion event
 
+writeLoop :: Connection -> WS.Connection -> IO b
 writeLoop gesConn wsConn = do
   msg :: T.Text <- WS.receiveData wsConn
   print $ "Creating user: " ++ (T.unpack msg)
   createUser gesConn msg
   writeLoop gesConn wsConn
 
+writeServerApp :: Connection -> WS.PendingConnection -> IO b
 writeServerApp gesConn pendingConn =
   writeLoop gesConn =<< WS.acceptRequest pendingConn
 
