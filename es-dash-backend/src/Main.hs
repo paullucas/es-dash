@@ -15,33 +15,22 @@ import           Data.UUID.V4 (nextRandom)
 import           Control.Concurrent (forkIO)
 import           Control.Concurrent.Async (wait, Async)
 
-
 -- User
 
-data User = User
-  { userID :: String
-  , name :: String
-  } deriving (Generic, Show)
-
-
+data User = User { userID :: String, name :: String } deriving (Generic, Show)
 instance ToJSON User
 instance FromJSON User
-
 
 createUser :: Connection -> T.Text -> IO (Async WriteResult)
 createUser conn username = do
   uuid <- nextRandom
-  let user = withJson $ User { userID = (toString uuid)
-                             , name = (T.unpack username)
-                             }
+  let user = withJson $ User { userID = (toString uuid), name = (T.unpack username) }
       stream = StreamName $ T.append (T.pack "user-") (toText uuid)
       event  = createEvent "userCreated" Nothing user
   sendEvent conn stream anyVersion event
 
-
 parseMember :: ResolvedEvent -> Maybe User
 parseMember = resolvedEventDataAsJson
-
 
 -- Read
 
@@ -52,11 +41,8 @@ readLoop gesSub wsConn = do
   WS.sendTextData wsConn msg
   readLoop gesSub wsConn
 
-
-readServerApp gesConn gesSub pendingConn = do
-  wsConn <- WS.acceptRequest pendingConn
-  readLoop gesSub wsConn
-
+readServerApp gesConn gesSub pendingConn =
+  readLoop gesSub =<< WS.acceptRequest pendingConn
 
 -- Write
 
@@ -66,18 +52,14 @@ writeLoop gesConn wsConn = do
   createUser gesConn msg
   writeLoop gesConn wsConn
 
-
-writeServerApp gesConn pendingConn = do
-  wsConn <- WS.acceptRequest pendingConn
-  writeLoop gesConn wsConn
-
+writeServerApp gesConn pendingConn =
+  writeLoop gesConn =<< WS.acceptRequest pendingConn
 
 -- Main
 
 settings :: Settings
 settings = defaultSettings
   { s_credentials = Just (credentials "admin" "changeit") }
-
 
 main :: IO ()
 main = do
