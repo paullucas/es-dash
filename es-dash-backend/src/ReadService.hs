@@ -1,38 +1,57 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module ReadService where
 
 import           EventStoreSettings
-import           Control.Monad
+import           Control.Concurrent (forkIO)
+import           Control.Concurrent.Chan.Unagi ( InChan, OutChan, newChan, readChan, dupChan, writeChan )
+import           Control.Monad (forever, when)
 import           Database.EventStore
 import qualified Data.Text as T
-import qualified Network.WebSockets as WS
+import           Network.Wai.Handler.Warp (run)
+import           Network.Wai.Handler.WebSockets as WaiWS
+import           Network.WebSockets as WS
+
+
+getStreamID :: ResolvedEvent -> T.Text
+getStreamID event = resolvedEventOriginalStreamId event
+
 
 logEvt :: T.Text -> IO ()
 logEvt id = print $ T.append (T.pack "Event Appeared! StreamID: ") id
 
+
 isNonStatEvt :: T.Text -> Bool
 isNonStatEvt id = not $ T.isPrefixOf (T.pack "$") id
 
-sendEvt :: WS.Connection -> T.Text -> IO ()
-sendEvt conn id = do
-  WS.sendTextData conn id
-  logEvt id
 
-readLoop :: Subscription t => t -> WS.Connection -> IO b
-readLoop gesSub wsConn = do
+readLoop broadcast gesSub  = do
   event <- nextEvent gesSub
-  let streamID :: T.Text = resolvedEventOriginalStreamId event
-  when (isNonStatEvt streamID) $ sendEvt wsConn streamID
-  readLoop gesSub wsConn
+  let streamID = getStreamID event
+  logEvt streamID
+  when (isNonStatEvt streamID) $ writeChan broadcast streamID
+  readLoop broadcast gesSub
 
-readServerApp :: Subscription t => t1 -> t -> WS.PendingConnection -> IO b
-readServerApp gesConn gesSub pendingConn = readLoop gesSub =<< WS.acceptRequest pendingConn
+
+sendLoop :: WebSocketsData a => WS.Connection -> OutChan a -> IO b
+sendLoop connection localChan = do
+  message <- readChan localChan
+  sendTextData connection message
+  sendLoop connection localChan
+
+
+handleWS :: InChan T.Text -> PendingConnection -> IO ()
+handleWS broadcast pending = do
+  connection <- acceptRequest pending
+  sendLoop connection =<< dupChan broadcast
+  return ()
+
 
 main :: IO ()
 main = do
-  conn <- connect settings connectionType
-  sub <- subscribeToAll conn False
-  WS.runServer "127.0.0.1" 3000 $ readServerApp conn sub
-  shutdown conn
-  waitTillClosed conn
+  (broadcast, _) <- newChan
+  gesConn <- connect settings connectionType
+  forkIO $ readLoop broadcast =<< subscribeToAll gesConn False
+  run 3000 $ WaiWS.websocketsOr defaultConnectionOptions (handleWS broadcast) undefined
+  shutdown gesConn
+  waitTillClosed gesConn

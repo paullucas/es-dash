@@ -1,6 +1,8 @@
 resolver: lts-9.3
 packages:
-- .
+- '.'
+- location: https://hackage.haskell.org/package/unagi-chan-0.4.0.0/unagi-chan-0.4.0.0.tar.gz
+  extra-dep: true
 extra-deps: []
 flags: {}
 extra-package-dbs: []
