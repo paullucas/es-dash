@@ -18,11 +18,11 @@ getStreamID event = resolvedEventOriginalStreamId event
 
 
 logEvt :: T.Text -> IO ()
-logEvt id = print $ T.append (T.pack "Event Appeared! StreamID: ") id
+logEvt id = print $ T.append "Event Appeared! StreamID: " id
 
 
 isNonStatEvt :: T.Text -> Bool
-isNonStatEvt id = not $ T.isPrefixOf (T.pack "$") id
+isNonStatEvt id = not $ T.isPrefixOf "$" id
 
 
 readLoop broadcast gesSub  = do
