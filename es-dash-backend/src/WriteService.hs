@@ -15,14 +15,14 @@ createUser :: Connection -> T.Text -> IO (Async WriteResult)
 createUser conn username = do
   uuid <- nextRandom
   let stream = StreamName $ T.append (T.pack "user-") (toText uuid)
-      user   = withJson $ User { userID = (toString uuid), name = (T.unpack username) }
+      user   = withJson User{ userID = toString uuid, name = T.unpack username }
       event  = createEvent "userCreated" Nothing user
   sendEvent conn stream anyVersion event
 
 writeLoop :: Connection -> WS.Connection -> IO b
 writeLoop gesConn wsConn = do
   msg :: T.Text <- WS.receiveData wsConn
-  print $ "Creating user: " ++ (T.unpack msg)
+  print $ "Creating user: " ++ T.unpack msg
   createUser gesConn msg
   writeLoop gesConn wsConn
 

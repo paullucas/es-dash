@@ -4,7 +4,7 @@ module ReadService where
 
 import           EventStoreSettings
 import           Control.Concurrent (forkIO)
-import           Control.Concurrent.Chan.Unagi ( InChan, OutChan, newChan, readChan, dupChan, writeChan )
+import           Control.Concurrent.Chan.Unagi (InChan, OutChan, newChan, readChan, dupChan, writeChan)
 import           Control.Monad (forever, when)
 import           Database.EventStore
 import qualified Data.Text as T
@@ -14,7 +14,7 @@ import           Network.WebSockets as WS
 
 
 getStreamID :: ResolvedEvent -> T.Text
-getStreamID event = resolvedEventOriginalStreamId event
+getStreamID = resolvedEventOriginalStreamId
 
 
 logEvt :: T.Text -> IO ()
@@ -25,7 +25,8 @@ isNonStatEvt :: T.Text -> Bool
 isNonStatEvt id = not $ T.isPrefixOf "$" id
 
 
-readLoop broadcast gesSub  = do
+readLoop :: Subscription t => InChan T.Text -> t -> IO b
+readLoop broadcast gesSub = do
   event <- nextEvent gesSub
   let streamID = getStreamID event
   logEvt streamID
@@ -50,7 +51,7 @@ handleWS broadcast pending = do
 main :: IO ()
 main = do
   (broadcast, _) <- newChan
-  gesConn <- connect settings connectionType
+  gesConn        <- connect settings connectionType
   forkIO $ readLoop broadcast =<< subscribeToAll gesConn False
   run 3000 $ WaiWS.websocketsOr defaultConnectionOptions (handleWS broadcast) undefined
   shutdown gesConn
