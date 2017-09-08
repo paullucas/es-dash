@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module ReadService where
@@ -10,12 +9,10 @@ import qualified Data.Text as T
 import qualified Network.WebSockets as WS
 
 logEvt :: T.Text -> IO ()
-logEvt id =
-  print $ T.append (T.pack "Event Appeared! StreamID: ") id
+logEvt id = print $ T.append (T.pack "Event Appeared! StreamID: ") id
 
 isNonStatEvt :: T.Text -> Bool
-isNonStatEvt id =
-  not (T.isPrefixOf "$" id)
+isNonStatEvt id = not $ T.isPrefixOf (T.pack "$") id
 
 sendEvt :: WS.Connection -> T.Text -> IO ()
 sendEvt conn id = do
@@ -30,8 +27,7 @@ readLoop gesSub wsConn = do
   readLoop gesSub wsConn
 
 readServerApp :: Subscription t => t1 -> t -> WS.PendingConnection -> IO b
-readServerApp gesConn gesSub pendingConn =
-  readLoop gesSub =<< WS.acceptRequest pendingConn
+readServerApp gesConn gesSub pendingConn = readLoop gesSub =<< WS.acceptRequest pendingConn
 
 main :: IO ()
 main = do

@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
 module WriteService where
 
@@ -15,8 +14,8 @@ import qualified Network.WebSockets as WS
 createUser :: Connection -> T.Text -> IO (Async WriteResult)
 createUser conn username = do
   uuid <- nextRandom
-  let user = withJson $ User { userID = (toString uuid), name = (T.unpack username) }
-      stream = StreamName $ T.append (T.pack "user-") (toText uuid)
+  let stream = StreamName $ T.append (T.pack "user-") (toText uuid)
+      user   = withJson $ User { userID = (toString uuid), name = (T.unpack username) }
       event  = createEvent "userCreated" Nothing user
   sendEvent conn stream anyVersion event
 
@@ -28,8 +27,7 @@ writeLoop gesConn wsConn = do
   writeLoop gesConn wsConn
 
 writeServerApp :: Connection -> WS.PendingConnection -> IO b
-writeServerApp gesConn pendingConn =
-  writeLoop gesConn =<< WS.acceptRequest pendingConn
+writeServerApp gesConn pendingConn = writeLoop gesConn =<< WS.acceptRequest pendingConn
 
 main :: IO ()
 main = do
